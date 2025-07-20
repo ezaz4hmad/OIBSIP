@@ -1,0 +1,131 @@
+// ---------- data models ----------
+/** Simple POJO representing a Train */
+static class Train {
+    int trainNo;
+    String trainName;
+    int seatsAvailable;
+
+    Train(int trainNo, String trainName, int seatsAvailable) {
+        this.trainNo = trainNo;
+        this.trainName = trainName;
+        this.seatsAvailable = seatsAvailable;
+    }
+
+    void display() {
+        System.out.printf("Train No: %d | %-20s | Seats Available: %d%n",
+                trainNo, trainName, seatsAvailable);
+    }
+}
+
+// ---------- data stores ----------
+private static final List<Train> trains = new ArrayList<>();
+private static final Map<Integer, String> tickets = new HashMap<>();
+private static int nextTicketId = 1001;
+private static final Scanner sc = new Scanner(System.in);
+
+// ---------- main ----------
+public static void main(String[] args) {
+    seedTrains();
+    login();
+}
+
+// ---------- helper methods ----------
+private static void seedTrains() {
+    trains.add(new Train(101, "Rajdhani Express", 5));
+    trains.add(new Train(102, "Shatabdi Express", 3));
+    trains.add(new Train(103, "Duronto Express", 4));
+}
+
+private static void login() {
+    System.out.println("=== Welcome to Indian Railways Reservation System ===");
+    System.out.print("Username: ");
+    String user = sc.nextLine();
+    System.out.print("Password: ");
+    String pass = sc.nextLine();
+
+    if (user.equals("admin") && pass.equals("admin123")) {
+        System.out.println("\nLogin successful!\n");
+        menuLoop();
+    } else {
+        System.out.println("Invalid credentials. Try again.\n");
+        login();
+    }
+}
+
+private static void menuLoop() {
+    while (true) {
+        System.out.println("\n----- MENU -----");
+        System.out.println("1. View Trains");
+        System.out.println("2. Book Ticket");
+        System.out.println("3. Cancel Ticket");
+        System.out.println("4. Exit");
+        System.out.print("Choose an option: ");
+
+        int choice = readInt();
+        switch (choice) {
+            case 1 -> viewTrains();
+            case 2 -> bookTicket();
+            case 3 -> cancelTicket();
+            case 4 -> {
+                System.out.println("Thank you for using Indian Railways!");
+                return;
+            }
+            default -> System.out.println("❌ Invalid option.");
+        }
+    }
+}
+
+private static void viewTrains() {
+    System.out.println("\nAvailable Trains:");
+    trains.forEach(Train::display);
+}
+
+private static void bookTicket() {
+    viewTrains();
+    System.out.print("Enter Train Number to book: ");
+    int trainNo = readInt();
+    sc.nextLine(); // clear newline
+
+    for (Train t : trains) {
+        if (t.trainNo == trainNo) {
+            if (t.seatsAvailable > 0) {
+                System.out.print("Passenger Name: ");
+                String name = sc.nextLine();
+
+                t.seatsAvailable--;
+                tickets.put(nextTicketId, name + " | " + t.trainName);
+                System.out.println("✅ Ticket booked! Your Ticket ID: " + nextTicketId);
+                nextTicketId++;
+            } else {
+                System.out.println("❌ No seats available on this train.");
+            }
+            return;
+        }
+    }
+    System.out.println("❌ Train number not found.");
+}
+
+private static void cancelTicket() {
+    System.out.print("Enter Ticket ID to cancel: ");
+    int id = readInt();
+
+    String info = tickets.remove(id);
+    if (info != null) {
+        String trainName = info.split(" \\| ")[1];
+        trains.stream()
+              .filter(t -> t.trainName.equals(trainName))
+              .findFirst()
+              .ifPresent(t -> t.seatsAvailable++);
+        System.out.println("✅ Ticket " + id + " cancelled.");
+    } else {
+        System.out.println("❌ Invalid Ticket ID.");
+    }
+}
+
+private static int readInt() {
+    while (!sc.hasNextInt()) {
+        System.out.print("Please enter a valid number: ");
+        sc.next(); // discard invalid token
+    }
+    return sc.nextInt();
+}
